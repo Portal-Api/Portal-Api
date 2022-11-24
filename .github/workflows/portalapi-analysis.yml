@@ -1,0 +1,28 @@
+name: Portal Api
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go', 'typescript' ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bazelbuild/setup-bazelisk@v2
+      - uses: github/portalapi-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          # See https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+          queries: +security-extended,security-and-quality
+      - run: bazel build ...
+      - uses: github/portalapi-action/analyze@v2
